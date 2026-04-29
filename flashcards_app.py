@@ -553,7 +553,7 @@ with st.sidebar:
     st.caption("SPACED REPETITION FLASHCARDS")
     st.markdown("---")
     api_key = st.text_input("Anthropic API Key", type="password",
-                            value=os.getenv("ANTHROPIC_API_KEY", ""),
+                            value=st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY", "")),
                             help="Get one at console.anthropic.com")
     st.caption("Only needed for paste-notes generation.")
     st.markdown("---")
