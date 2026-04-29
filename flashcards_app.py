@@ -246,7 +246,7 @@ h1, h2, h3, h4, h5, h6 {{
 }}
 
 /* Confidence button tints.
-   Streamlit auto-generates a `.st-key-{key}` class on the wrapper for any
+   Streamlit auto-generates a .st-key-CONFKEY class on the wrapper for any
    keyed widget. So buttons created with key="conf_0" land inside an element
    with class `st-key-conf_0`. Targeting `.st-key-conf_0 button` is the
    documented, stable way to scope CSS to a specific button. */
