@@ -1,0 +1,21 @@
+# Local data — don't sync flashcards across machines via git
+flashcards_data.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Secrets — never commit
+.streamlit/secrets.toml
+.env
+
+# OS
+.DS_Store
+
+# Old local backup copies
+flashcards_app_old*.py
+flashcards_data copy.json
