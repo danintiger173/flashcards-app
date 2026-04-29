@@ -78,7 +78,7 @@ def get_theme_css(font_name, palette_name):
     background-color: {p['bg']} !important;
 }}
 [data-testid="stDecoration"] {{ display: none !important; }}
-.main .block-container {{ padding-top: 2rem; max-width: 720px; }}
+.main .block-container {{ padding-top: 2rem; max-width: 900px; }}
 
 /* Sidebar */
 [data-testid="stSidebar"], [data-testid="stSidebar"] > div,
@@ -195,26 +195,34 @@ h1, h2, h3, h4, h5, h6 {{
 .question-card {{
     background: {p['panel']};
     border: 1px solid {p['border']};
-    border-radius: 8px;
-    padding: 40px 32px;
-    margin: 16px 0;
+    border-radius: 10px;
+    padding: 80px 48px;
+    margin: 20px 0;
     text-align: center;
-    font-size: 1.3rem;
+    font-size: 1.7rem;
     font-family: {f['family']};
     color: {p['fg']} !important;
-    line-height: 1.6;
+    line-height: 1.55;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }}
 .answer-card {{
     background: {p['ans_bg']};
     border: 1px solid {p['ans_border']};
-    border-radius: 8px;
-    padding: 32px;
-    margin: 8px 0;
+    border-radius: 10px;
+    padding: 72px 48px;
+    margin: 12px 0;
     text-align: center;
-    font-size: 1.15rem;
+    font-size: 1.45rem;
     font-family: {f['family']};
     color: {p['ans_fg']} !important;
-    line-height: 1.6;
+    line-height: 1.55;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }}
 .card-label {{
     font-family: 'JetBrains Mono', monospace;
@@ -237,37 +245,52 @@ h1, h2, h3, h4, h5, h6 {{
     opacity: 0.8;
 }}
 
-/* Confidence button tints — use sibling-marker pattern for reliability.
-   We emit a hidden marker <span> right before each rating button; the
-   following Streamlit button container is then styled via the sibling
-   combinator. This is robust to Streamlit DOM changes. */
-.recall-btn-marker {{ display: none; }}
-.recall-btn-no-idea + div .stButton > button,
-.recall-btn-no-idea + .stButton > button,
-.recall-btn-no-idea ~ div [data-testid="stButton"] > button {{
-    background-color: rgba(220, 70, 70, 0.18) !important;
-    border: 1px solid rgba(220, 70, 70, 0.5) !important;
+/* Confidence button tints.
+   Streamlit auto-generates a `.st-key-{key}` class on the wrapper for any
+   keyed widget. So buttons created with key="conf_0" land inside an element
+   with class `st-key-conf_0`. Targeting `.st-key-conf_0 button` is the
+   documented, stable way to scope CSS to a specific button. */
+.st-key-conf_0 button {{
+    background-color: rgba(220, 70, 70, 0.16) !important;
+    border: 1px solid rgba(220, 70, 70, 0.45) !important;
     color: {p['fg']} !important;
 }}
-.recall-btn-no-idea + div .stButton > button:hover,
-.recall-btn-no-idea + .stButton > button:hover {{
+.st-key-conf_0 button:hover {{
     background-color: rgba(220, 70, 70, 0.28) !important;
     border-color: rgba(220, 70, 70, 0.7) !important;
-}}
-.recall-btn-got-it + div .stButton > button,
-.recall-btn-got-it + .stButton > button,
-.recall-btn-got-it ~ div [data-testid="stButton"] > button {{
-    background-color: rgba(70, 130, 220, 0.18) !important;
-    border: 1px solid rgba(70, 130, 220, 0.5) !important;
     color: {p['fg']} !important;
 }}
-.recall-btn-got-it + div .stButton > button:hover,
-.recall-btn-got-it + .stButton > button:hover {{
-    background-color: rgba(70, 130, 220, 0.28) !important;
-    border-color: rgba(70, 130, 220, 0.7) !important;
+.st-key-conf_0 button:active,
+.st-key-conf_0 button:focus,
+.st-key-conf_0 button:focus:not(:active) {{
+    background-color: rgba(220, 70, 70, 0.32) !important;
+    border-color: rgba(220, 70, 70, 0.85) !important;
+    color: {p['fg']} !important;
+    box-shadow: none !important;
+    outline: none !important;
 }}
 
-/* Multi-segment progress bar */
+.st-key-conf_3 button {{
+    background-color: rgba(70, 130, 220, 0.16) !important;
+    border: 1px solid rgba(70, 130, 220, 0.45) !important;
+    color: {p['fg']} !important;
+}}
+.st-key-conf_3 button:hover {{
+    background-color: rgba(70, 130, 220, 0.28) !important;
+    border-color: rgba(70, 130, 220, 0.7) !important;
+    color: {p['fg']} !important;
+}}
+.st-key-conf_3 button:active,
+.st-key-conf_3 button:focus,
+.st-key-conf_3 button:focus:not(:active) {{
+    background-color: rgba(70, 130, 220, 0.32) !important;
+    border-color: rgba(70, 130, 220, 0.85) !important;
+    color: {p['fg']} !important;
+    box-shadow: none !important;
+    outline: none !important;
+}}
+
+/* Multi-segment confidence progress bar */
 .recall-progress-wrap {{
     width: 100%;
     margin: 8px 0 4px 0;
@@ -378,13 +401,11 @@ def start_study(card_pool, do_shuffle, reversed_mode):
     st.session_state.revealed           = False
     st.session_state.show_front         = not reversed_mode
     st.session_state.study_reversed     = reversed_mode
-    st.session_state.requeue_pool       = []   # list of card IDs to repeat
+    st.session_state.requeue_pool       = []
     st.session_state.cards_since_requeue = 0
     st.session_state.view               = "study"
-    st.session_state.flipped            = False  # kept for compat
+    st.session_state.flipped            = False
     st.session_state.session_ratings    = {}     # card_id -> latest quality
-    # Track distinct cards in this session for progress denominator.
-    # Requeued cards don't inflate the total — we track unique IDs only.
     st.session_state.session_card_ids   = {c["id"] for c in queue}
 
 
@@ -533,7 +554,7 @@ _state_defaults = {
     "study_reversed": False, "flipped": False,
     "requeue_pool": [], "cards_since_requeue": 0,
     "current_deck_id": None, "confirm_delete_deck": None,
-    "session_ratings": {},  # card_id -> latest quality (0..3) for this session
+    "session_ratings": {},
 }
 for k, v in _state_defaults.items():
     if k not in st.session_state:
@@ -612,19 +633,14 @@ if st.session_state.view == "study" and st.session_state.study_queue:
     card  = queue[idx]
 
     # Multi-segment progress bar broken down by confidence rating.
-    # Total denominator = unique cards in the session (requeues don't inflate).
     total_cards = len(st.session_state.get("session_card_ids", set())) or len(queue)
     ratings = st.session_state.session_ratings  # card_id -> quality (0..3)
 
-    # Count cards at each confidence level
     counts = {0: 0, 1: 0, 2: 0, 3: 0}
     for q in ratings.values():
         if q in counts:
             counts[q] += 1
-    rated_total = sum(counts.values())
-    unrated = max(0, total_cards - rated_total)
 
-    # Colors per quality level (matches button tints + a graded scale in between)
     seg_colors = {
         0: "rgba(220, 70, 70, 0.85)",    # No Idea — red
         1: "rgba(230, 150, 70, 0.85)",   # Unfamiliar — orange
@@ -632,7 +648,6 @@ if st.session_state.view == "study" and st.session_state.study_queue:
         3: "rgba(70, 130, 220, 0.85)",   # Got It — blue
     }
 
-    # Build segments in order: 0, 1, 2, 3, then unrated remainder (transparent)
     segments_html = ""
     for q in (0, 1, 2, 3):
         pct = (counts[q] / total_cards * 100) if total_cards else 0
@@ -653,24 +668,16 @@ if st.session_state.view == "study" and st.session_state.study_queue:
     )
 
     # Determine what to show based on show_front + study direction
-    reversed_mode = st.session_state.study_reversed
-    show_front    = st.session_state.show_front
+    show_front = st.session_state.show_front
 
     if show_front:
-        visible_text    = card["front"]
-        visible_label   = "Term"
-        hidden_text     = card["back"]
-        hidden_label    = "Definition"
+        visible_text  = card["front"]
+        visible_label = "Term"
     else:
-        visible_text    = card["back"]
-        visible_label   = "Definition"
-        hidden_text     = card["front"]
-        hidden_label    = "Term"
+        visible_text  = card["back"]
+        visible_label = "Definition"
 
-    # Badge if this is a requeue card (it came back from the pool)
-    # We detect this by checking the card's ID is not in the original
-    # queue position. Simpler: just show badge if it was requeued
-    # (we track by checking if it appeared more than once in queue up to idx)
+    # Badge if this card has been seen earlier in this session (requeued)
     ids_so_far = [queue[i]["id"] for i in range(idx)]
     is_requeued = ids_so_far.count(card["id"]) > 0
     if is_requeued:
@@ -683,10 +690,10 @@ if st.session_state.view == "study" and st.session_state.study_queue:
 
         if st.button("Reveal", use_container_width=True, type="primary"):
             st.session_state.revealed   = True
-            st.session_state.show_front = not show_front  # flip to other side on reveal
+            st.session_state.show_front = not show_front  # flip on reveal
             st.rerun()
     else:
-        # Post-reveal: show only the currently-facing side as the answer panel
+        # Post-reveal: show only the currently-facing side
         cur_show_front = st.session_state.show_front
         if cur_show_front:
             revealed_text  = card["front"]
@@ -705,25 +712,16 @@ if st.session_state.view == "study" and st.session_state.study_queue:
                 st.session_state.show_front = not st.session_state.show_front
                 st.rerun()
 
-        # Confidence buttons. We emit a hidden marker span before "No Idea"
-        # and "Got It" so the CSS sibling selectors can tint just those two.
+        # Confidence buttons — use plain st.button with keys.
+        # Streamlit auto-adds class `st-key-conf_X` to each wrapper, which the
+        # CSS in get_theme_css targets to tint conf_0 (No Idea) and conf_3 (Got It).
         st.markdown("**How well did you know this?**")
         cols = st.columns(4)
-        marker_classes = {
-            0: "recall-btn-no-idea",
-            3: "recall-btn-got-it",
-        }
-        for col, (label, quality, tip) in zip(cols, CONFIDENCE_LEVELS):
-            with col:
-                if quality in marker_classes:
-                    st.markdown(
-                        f'<span class="recall-btn-marker {marker_classes[quality]}"></span>',
-                        unsafe_allow_html=True,
-                    )
-                if st.button(label, use_container_width=True, key=f"conf_{quality}",
-                             help=tip):
-                    handle_rating(quality, card)
-                    st.rerun()
+        for col, (label_text, quality, tip) in zip(cols, CONFIDENCE_LEVELS):
+            if col.button(label_text, use_container_width=True,
+                          key=f"conf_{quality}", help=tip):
+                handle_rating(quality, card)
+                st.rerun()
 
     st.markdown("---")
     if st.button("End session", key="end_study"):
