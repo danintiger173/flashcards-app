@@ -114,6 +114,39 @@ h1, h2, h3, h4, h5, h6 {{
     color: {p['muted']} !important;
 }}
 
+/* Catch-all: any element inside the app that hasn't been styled by a more
+   specific rule above falls back to fg color. This protects against light
+   themes (Paper, Parchment) where Streamlit's defaults assume dark mode
+   and leave text invisibly white-on-white. The more specific rules above
+   still win for muted text, accents, etc. */
+.stApp, .stApp * {{
+    color: {p['fg']};
+}}
+/* Re-assert the things that are intentionally NOT fg color */
+.stApp [data-testid="stCaptionContainer"] p,
+.stApp [data-testid="stCaptionContainer"] small,
+.stApp small,
+.stApp [data-testid="stMetricLabel"] p {{
+    color: {p['muted']} !important;
+}}
+.stApp [data-testid="stMetricValue"],
+.stApp [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+    color: {p['accent']} !important;
+}}
+
+/* SVG icons (chevrons, expander arrows, button icons, sidebar collapse, etc.)
+   inherit `currentColor` by default. Force them to fg color so they're
+   visible on light themes. */
+.stApp svg {{
+    fill: {p['fg']};
+    color: {p['fg']};
+}}
+/* Keep the muted-icon look on caption areas */
+.stApp [data-testid="stCaptionContainer"] svg {{
+    fill: {p['muted']};
+    color: {p['muted']};
+}}
+
 /* Inputs */
 .stTextInput input, .stTextArea textarea,
 [data-testid="stNumberInput"] input {{
@@ -159,12 +192,27 @@ h1, h2, h3, h4, h5, h6 {{
     color: {p['fg']} !important;
 }}
 
-/* Buttons */
+/* Buttons — default styling for any unstyled button. Light themes need
+   explicit bg + fg or buttons end up white-on-white. */
 .stButton > button {{
     border-radius: 4px;
     font-weight: 500;
     letter-spacing: 0.03em;
     font-family: {f['family']};
+    background-color: {p['panel']};
+    color: {p['fg']};
+    border: 1px solid {p['border']};
+}}
+.stButton > button:hover {{
+    background-color: {p['border']};
+    color: {p['fg']};
+    border-color: {p['border']};
+}}
+/* Primary buttons keep accent color */
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="stBaseButton-primary"] {{
+    background-color: {p['accent']};
+    border-color: {p['accent']};
 }}
 
 /* Metrics */
@@ -245,11 +293,9 @@ h1, h2, h3, h4, h5, h6 {{
     opacity: 0.8;
 }}
 
-/* Confidence button tints.
-   Streamlit auto-generates a .st-key-CONFKEY class on the wrapper for any
-   keyed widget. So buttons created with key="conf_0" land inside an element
-   with class `st-key-conf_0`. Targeting `.st-key-conf_0 button` is the
-   documented, stable way to scope CSS to a specific button. */
+/* Confidence button tints. Streamlit auto-generates a class
+   .st-key-CONFKEY on the wrapper of any keyed widget, so we target
+   .st-key-conf_0 (No Idea) and .st-key-conf_3 (Got It). */
 .st-key-conf_0 button {{
     background-color: rgba(220, 70, 70, 0.16) !important;
     border: 1px solid rgba(220, 70, 70, 0.45) !important;
@@ -405,13 +451,12 @@ def start_study(card_pool, do_shuffle, reversed_mode):
     st.session_state.cards_since_requeue = 0
     st.session_state.view               = "study"
     st.session_state.flipped            = False
-    st.session_state.session_ratings    = {}     # card_id -> latest quality
+    st.session_state.session_ratings    = {}
     st.session_state.session_card_ids   = {c["id"] for c in queue}
 
 
 def handle_rating(quality, card):
     """Apply SM-2, update requeue pool, possibly insert a requeue card, advance."""
-    # Track this rating for the live progress bar (latest rating wins on requeues)
     st.session_state.session_ratings[card["id"]] = quality
 
     # Save SM-2 update
@@ -642,10 +687,10 @@ if st.session_state.view == "study" and st.session_state.study_queue:
             counts[q] += 1
 
     seg_colors = {
-        0: "rgba(220, 70, 70, 0.85)",    # No Idea — red
-        1: "rgba(230, 150, 70, 0.85)",   # Unfamiliar — orange
-        2: "rgba(180, 180, 90, 0.85)",   # Familiar — yellow-green
-        3: "rgba(70, 130, 220, 0.85)",   # Got It — blue
+        0: "rgba(220, 70, 70, 0.85)",
+        1: "rgba(230, 150, 70, 0.85)",
+        2: "rgba(180, 180, 90, 0.85)",
+        3: "rgba(70, 130, 220, 0.85)",
     }
 
     segments_html = ""
@@ -667,7 +712,6 @@ if st.session_state.view == "study" and st.session_state.study_queue:
         unsafe_allow_html=True,
     )
 
-    # Determine what to show based on show_front + study direction
     show_front = st.session_state.show_front
 
     if show_front:
@@ -677,23 +721,20 @@ if st.session_state.view == "study" and st.session_state.study_queue:
         visible_text  = card["back"]
         visible_label = "Definition"
 
-    # Badge if this card has been seen earlier in this session (requeued)
     ids_so_far = [queue[i]["id"] for i in range(idx)]
     is_requeued = ids_so_far.count(card["id"]) > 0
     if is_requeued:
         st.markdown('<div class="requeue-badge">↩ Revisiting</div>', unsafe_allow_html=True)
 
     if not st.session_state.revealed:
-        # Pre-reveal: show the prompt side only
         st.markdown(f'<div class="card-label">{visible_label}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="question-card">{visible_text}</div>', unsafe_allow_html=True)
 
         if st.button("Reveal", use_container_width=True, type="primary"):
             st.session_state.revealed   = True
-            st.session_state.show_front = not show_front  # flip on reveal
+            st.session_state.show_front = not show_front
             st.rerun()
     else:
-        # Post-reveal: show only the currently-facing side
         cur_show_front = st.session_state.show_front
         if cur_show_front:
             revealed_text  = card["front"]
@@ -705,16 +746,12 @@ if st.session_state.view == "study" and st.session_state.study_queue:
         st.markdown(f'<div class="card-label">{revealed_label}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="answer-card">{revealed_text}</div>', unsafe_allow_html=True)
 
-        # Flip toggle button
         flip_col, _ = st.columns([1, 3])
         with flip_col:
             if st.button("↩ Flip card", key="flip_btn", use_container_width=True):
                 st.session_state.show_front = not st.session_state.show_front
                 st.rerun()
 
-        # Confidence buttons — use plain st.button with keys.
-        # Streamlit auto-adds class `st-key-conf_X` to each wrapper, which the
-        # CSS in get_theme_css targets to tint conf_0 (No Idea) and conf_3 (Got It).
         st.markdown("**How well did you know this?**")
         cols = st.columns(4)
         for col, (label_text, quality, tip) in zip(cols, CONFIDENCE_LEVELS):
