@@ -31,21 +31,27 @@ FONTS = {
 # --- Color Palettes ---
 PALETTES = {
     "Twilight":  {"bg": "#0e0d0b", "fg": "#f0ebe0", "muted": "#6b6355", "accent": "#c9a84c",
+                  "accent_fg": "#0e0d0b",
                   "panel": "#1a1814", "border": "#2a2620",
                   "ans_bg": "#1a1f1a", "ans_border": "#2a3a2a", "ans_fg": "#c8e0c8"},
     "Midnight":  {"bg": "#0a0e1a", "fg": "#e0e6f0", "muted": "#5a6478", "accent": "#7a9eff",
+                  "accent_fg": "#0a0e1a",
                   "panel": "#141828", "border": "#252a40",
                   "ans_bg": "#141e2a", "ans_border": "#253545", "ans_fg": "#c8d8f0"},
     "Forest":    {"bg": "#0d1410", "fg": "#e0ebe0", "muted": "#5a6855", "accent": "#7ac74f",
+                  "accent_fg": "#0d1410",
                   "panel": "#141d18", "border": "#243024",
                   "ans_bg": "#141f1a", "ans_border": "#2a3a2a", "ans_fg": "#c8e0c8"},
     "Slate":     {"bg": "#1a1d24", "fg": "#dde2eb", "muted": "#7a8290", "accent": "#a0b8d8",
+                  "accent_fg": "#1a1d24",
                   "panel": "#252a33", "border": "#363b48",
                   "ans_bg": "#252e30", "ans_border": "#3a4548", "ans_fg": "#c8d8d4"},
     "Parchment": {"bg": "#f4ede0", "fg": "#2a2418", "muted": "#8b7d6b", "accent": "#8b5a2b",
+                  "accent_fg": "#fbf6ea",
                   "panel": "#fbf6ea", "border": "#d8cfb8",
                   "ans_bg": "#eef4e8", "ans_border": "#c0c8a8", "ans_fg": "#2a3818"},
     "Paper":     {"bg": "#ffffff", "fg": "#1a1a1a", "muted": "#777777", "accent": "#2563eb",
+                  "accent_fg": "#ffffff",
                   "panel": "#f7f7f7", "border": "#d0d0d0",
                   "ans_bg": "#f0f7f0", "ans_border": "#c0d0c0", "ans_fg": "#1a3a1a"},
 }
@@ -136,15 +142,37 @@ h1, h2, h3, h4, h5, h6 {{
 
 /* SVG icons (chevrons, expander arrows, button icons, sidebar collapse, etc.)
    inherit `currentColor` by default. Force them to fg color so they're
-   visible on light themes. */
-.stApp svg {{
-    fill: {p['fg']};
-    color: {p['fg']};
+   visible on light themes. !important is required because Streamlit's
+   header buttons ship with their own white-fill rules. */
+.stApp svg,
+[data-testid="stHeader"] svg,
+[data-testid="stToolbar"] svg,
+[data-testid="stHeader"] button svg,
+[data-testid="stToolbar"] button svg,
+header svg,
+header button svg {{
+    fill: {p['fg']} !important;
+    color: {p['fg']} !important;
+}}
+/* Header / toolbar buttons themselves (the round icon buttons in the top
+   right) — force their text/icon color and a subtle hover so they read
+   correctly on light palettes. */
+[data-testid="stHeader"] button,
+[data-testid="stToolbar"] button,
+header button {{
+    color: {p['fg']} !important;
+    background-color: transparent !important;
+}}
+[data-testid="stHeader"] button:hover,
+[data-testid="stToolbar"] button:hover,
+header button:hover {{
+    background-color: {p['panel']} !important;
+    color: {p['fg']} !important;
 }}
 /* Keep the muted-icon look on caption areas */
 .stApp [data-testid="stCaptionContainer"] svg {{
-    fill: {p['muted']};
-    color: {p['muted']};
+    fill: {p['muted']} !important;
+    color: {p['muted']} !important;
 }}
 
 /* Inputs */
@@ -208,11 +236,31 @@ h1, h2, h3, h4, h5, h6 {{
     color: {p['fg']};
     border-color: {p['border']};
 }}
-/* Primary buttons keep accent color */
+/* Primary buttons keep accent color. accent_fg is chosen per-palette so that
+   text contrasts the accent (light text on dark accents like Parchment's
+   brown or Paper's blue; dark text on bright accents on dark themes). */
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="stBaseButton-primary"] {{
-    background-color: {p['accent']};
-    border-color: {p['accent']};
+    background-color: {p['accent']} !important;
+    border-color: {p['accent']} !important;
+    color: {p['accent_fg']} !important;
+}}
+.stButton > button[kind="primary"]:hover,
+.stButton > button[data-testid="stBaseButton-primary"]:hover {{
+    background-color: {p['accent']} !important;
+    border-color: {p['accent']} !important;
+    color: {p['accent_fg']} !important;
+    filter: brightness(1.08);
+}}
+.stButton > button[kind="primary"]:active,
+.stButton > button[kind="primary"]:focus,
+.stButton > button[data-testid="stBaseButton-primary"]:active,
+.stButton > button[data-testid="stBaseButton-primary"]:focus {{
+    background-color: {p['accent']} !important;
+    border-color: {p['accent']} !important;
+    color: {p['accent_fg']} !important;
+    box-shadow: none !important;
+    outline: none !important;
 }}
 
 /* Metrics */
